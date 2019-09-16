@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Veiwer</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="http://cdn.bootcss.com/blueimp-md5/1.1.0/js/md5.js"></script>
+</head>
+<body onload="init();" style="height: 100%">
+	<iframe allowfullscreen=true frameborder="no" border="0" marginwidth= "0" marginheight="0" src="http://42.159.153.210:8080/BDView/" style="width: 90%;height: 600px;padding: 30px" id = "webgl"></iframe>
+	<button onclick="setCamera();">setCamera</button>
+	<img id="image" src="">
+
+</body>
+<script type="text/javascript">
+
+	var token = "";
+	var Box = {};
+	var ScreenPara = {};
+	var label_visible = true;
+
+	function init(){
+
+		app = document.getElementById("webgl").contentWindow;
+		app.postMessage({command:"Init",parameter:{menu:false,loadingFiles_display:true}},"*");
+		window.addEventListener("message", (e)=>{callback(e);})
+
+	}
+
+	function callback(e){
+
+		if(e.data.command != "CameraAndTarget")
+		console.log(e);
+
+		switch(e.data.command){
+			case "EngineReady":
+				{
+
+					var url = "http://42.159.153.210:8080/bdms-rebuild//doc/download/1115"	  //	根据部署需要会变化
+
+					app.postMessage({command:"setVisible",parameter:{fileSize:177855,fileType:"WEXBIM",visible:"WEXBIM",edge:true,url:url,position:{x:0,y:0,z:0},rotation:{x:0,y:0,z:0}}},"*");
+				}
+
+				break;
+			case "CurrentSelectedEnt":
+				break;
+			case "ViewpointSubmited":
+
+				ScreenPara = e.data.parameter;
+				localStorage.ScreenPara = JSON.stringify(ScreenPara);
+				document.getElementById("image").src = e.data.parameter.para2
+
+				break;
+			case "CameraAndTarget":
+				Box =  e.data.parameter.SenceBox;
+				break;
+		}
+	}
+
+
+	function setCamera(){
+		// app.postMessage({command:"SetCameraAndTarget",parameter:{camera:{x:40000,y:40000,z:40000},target:{x:10000,y:10000,z:10000}}},"*");
+		var length = Math.max(Box.max.x,Box.max.y,Box.max.z) - Math.min(Box.min.x,Box.min.y,Box.min.z);
+		length *= 2;
+
+		var center = {}
+		center.x = (Box.max.x + Box.min.x) / 2;
+		center.y = (Box.max.y + Box.min.y) / 2;
+		center.z = (Box.max.z + Box.min.z) / 2;
+
+		var target = center;
+		var camera = {};
+		camera.x = target.x + length;
+		camera.y = target.y;
+		camera.z = target.z + 1;
+
+		app.postMessage({command:"SetCameraAndTarget",parameter:{camera:camera,target:target}},"*");
+	}
+
+
+</script>
+</html>
